@@ -17,7 +17,7 @@ fi
 
 if [ "$1" = "-e" ]; then
 . enterprise_versions.sh
-else		
+else
 . versions.sh
 fi
 if [ "`id -u`" -eq 0 ]; then
@@ -32,7 +32,7 @@ usage="$(basename "$0") [-h] [--version] [-e] [-d Prometheus data-dir] [-G path 
 PROMETHEUS_VERSION=v2.7.2
 
 SCYLLA_TARGET_FILE=$PWD/prometheus/scylla_servers.yml
-SCYLLA_MANGER_TARGET_FILE=$PWD/prometheus/scylla_manager_servers.yml
+SCYLLA_MANAGER_TARGET_FILE=$PWD/prometheus/scylla_manager_servers.yml
 GRAFANA_ADMIN_PASSWORD=""
 ALERTMANAGER_PORT=""
 DOCKER_PARAM=""
@@ -76,7 +76,7 @@ while getopts ':hled:g:p:v:s:n:a:c:j:b:m:r:R:M:G:D:N:' option; do
        ;;
     b) PROMETHEUS_COMMAND_LINE_OPTIONS_ARRAY+=("$OPTARG")
        ;;
-    N) SCYLLA_MANGER_TARGET_FILE="$OPTARG"
+    N) SCYLLA_MANAGER_TARGET_FILE="$OPTARG"
        ;;
     :) printf "missing argument for -%s\n" "$OPTARG" >&2
        echo "$usage" >&2
@@ -151,7 +151,7 @@ then
          -v $PWD/prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml:Z \
          -v $PROMETHEUS_RULES:/etc/prometheus/prometheus.rules.yml:Z \
          -v $(readlink -m $SCYLLA_TARGET_FILE):/etc/scylla.d/prometheus/scylla_servers.yml:Z \
-         -v $(readlink -m $SCYLLA_MANGER_TARGET_FILE):/etc/scylla.d/prometheus/scylla_manager_servers.yml:Z \
+         -v $(readlink -m $SCYLLA_MANAGER_TARGET_FILE):/etc/scylla.d/prometheus/scylla_manager_servers.yml:Z \
          -v $(readlink -m $NODE_TARGET_FILE):/etc/scylla.d/prometheus/node_exporter_servers.yml:Z \
          -p $PROMETHEUS_PORT:9090 --name $PROMETHEUS_NAME prom/prometheus:$PROMETHEUS_VERSION --config.file=/etc/prometheus/prometheus.yml $PROMETHEUS_COMMAND_LINE_OPTIONS
 else
@@ -160,7 +160,7 @@ else
          -v $PWD/prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml:Z \
          -v $PROMETHEUS_RULES:/etc/prometheus/prometheus.rules.yml:Z \
          -v $(readlink -m $SCYLLA_TARGET_FILE):/etc/scylla.d/prometheus/scylla_servers.yml:Z \
-         -v $(readlink -m $SCYLLA_MANGER_TARGET_FILE):/etc/scylla.d/prometheus/scylla_manager_servers.yml:Z \
+         -v $(readlink -m $SCYLLA_MANAGER_TARGET_FILE):/etc/scylla.d/prometheus/scylla_manager_servers.yml:Z \
          -v $(readlink -m $NODE_TARGET_FILE):/etc/scylla.d/prometheus/node_exporter_servers.yml:Z \
          -p $PROMETHEUS_PORT:9090 --name $PROMETHEUS_NAME prom/prometheus:$PROMETHEUS_VERSION  --config.file=/etc/prometheus/prometheus.yml $PROMETHEUS_COMMAND_LINE_OPTIONS
 fi
@@ -207,4 +207,6 @@ for val in "${GRAFANA_DASHBOARD_ARRAY[@]}"; do
         GRAFANA_DASHBOARD_COMMAND="$GRAFANA_DASHBOARD_COMMAND -j $val"
 done
 
-./start-grafana.sh -p $DB_ADDRESS -D "$DOCKER_PARAM" $GRAFANA_PORT $EXTERNAL_VOLUME -m $AM_ADDRESS -M $MANAGER_VERSION -v $VERSIONS $GRAFANA_ENV_COMMAND $GRAFANA_DASHBOARD_COMMAND $GRAFANA_ADMIN_PASSWORD
+if [ "${GRAFANA_PORT}" != "0" ]; then
+   ./start-grafana.sh -p $DB_ADDRESS -D "$DOCKER_PARAM" $GRAFANA_PORT $EXTERNAL_VOLUME -m $AM_ADDRESS -M $MANAGER_VERSION -v $VERSIONS $GRAFANA_ENV_COMMAND $GRAFANA_DASHBOARD_COMMAND $GRAFANA_ADMIN_PASSWORD
+fi
